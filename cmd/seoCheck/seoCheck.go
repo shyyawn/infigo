@@ -3,6 +3,7 @@ package seoCheck
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	c "github.com/logrusorgru/aurora"
 	"github.com/shyyawn/go-to/config"
 	log "github.com/shyyawn/go-to/logging"
 	"github.com/shyyawn/infigo/pkg/data"
@@ -31,7 +32,6 @@ func seoCheck(cmd *cobra.Command, args []string) {
 }
 
 func GetMetas(url string) {
-	log.Trace(url)
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -47,8 +47,15 @@ func GetMetas(url string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println(c.BgGreen("Meta Information for " + url))
 	title := doc.Find("title")
-	fmt.Println(title.Text())
+	fmt.Printf("%-10s %s \n", c.Green("Title"), title.Text())
+	desc, ok := doc.Find("meta[name='description']").Attr("content")
+	if !ok {
+		desc = "[[ MISSING ]]"
+	}
+	fmt.Printf("%-10s %s \n", c.Green("Desc"), desc)
+	fmt.Println("")
 }
 
 func init() {

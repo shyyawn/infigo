@@ -31,7 +31,6 @@ func (u *Urls) LoadUrls(filePath string) *Urls {
 func (u *Urls) GetUrls(alias string) (domain string, urls []string) {
 	for _, url := range u.Domains {
 		if url.Alias == strings.ToLower(alias) {
-			log.Warn(len(url.Urls))
 			return url.Domain, url.Urls
 		}
 	}
