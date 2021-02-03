@@ -1,0 +1,6 @@
+# Create a copy of this file as urls.yml and run by passing domain key as argument
+domains:
+  - alias: example
+    domain: https://www.example.com
+    urls:
+      - /

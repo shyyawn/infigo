@@ -1,0 +1,11 @@
+domains:
+  - alias: mobil123
+    domain: https://www.mobil123.com
+    urls:
+      - "/"
+      - "/mobil-dijual/indonesia"
+  - alias: one-carmudi
+    domain: https://one.carmudi.co.id
+    urls:
+      - "/"
+      - "/mobil-dijual/indonesia"
