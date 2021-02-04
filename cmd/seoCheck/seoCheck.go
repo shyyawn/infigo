@@ -1,6 +1,7 @@
 package seoCheck
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	c "github.com/logrusorgru/aurora"
@@ -9,7 +10,10 @@ import (
 	"github.com/shyyawn/infigo/pkg/data"
 	"github.com/spf13/cobra"
 	"net/http"
+	"sync"
 )
+
+var alias string
 
 var Cmd = &cobra.Command{
 	Use:   "seoCheck",
@@ -19,22 +23,30 @@ var Cmd = &cobra.Command{
 }
 
 func seoCheck(cmd *cobra.Command, args []string) {
-	log.Info("SEO Check")
+
 	var u data.Urls
 	configDir := config.AppConfig.GetString("runtime_dir") + "/config"
-	log.Info(configDir)
+
 	u.LoadUrls(configDir + "/seoCheck/urls.yml")
-	log.Info(u)
-	domain, urls := u.GetUrls("one-carmudi")
+
+	domain, urls := u.GetUrls(alias)
+	wg := sync.WaitGroup{}
+
 	for _, url := range urls {
-		GetMetas(domain + url)
+		wg.Add(1)
+		GetMetas(&wg, domain+url)
+		//go GetMetas(&wg, domain + url)
 	}
+	wg.Wait()
 }
 
-func GetMetas(url string) {
+func GetMetas(wg *sync.WaitGroup, url string) {
+	defer wg.Done()
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Warn("URL Failed: " + url)
+		log.Error(err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
@@ -47,17 +59,19 @@ func GetMetas(url string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(c.BgGreen("Meta Information for " + url))
+	detail := fmt.Sprintln(c.BgGreen("Meta Information for " + url))
 	title := doc.Find("title")
-	fmt.Printf("%-10s %s \n", c.Green("Title"), title.Text())
+	detail = detail + fmt.Sprintf("%-10s %s \n", c.Green("Title"), title.Text())
 	desc, ok := doc.Find("meta[name='description']").Attr("content")
 	if !ok {
 		desc = "[[ MISSING ]]"
 	}
-	fmt.Printf("%-10s %s \n", c.Green("Desc"), desc)
-	fmt.Println("")
+	detail = detail + fmt.Sprintf("%-10s %s \n", c.Green("Desc"), desc)
+	fmt.Println(detail)
 }
 
 func init() {
 	log.Info("Init SEO Check")
+	Cmd.Flags().StringVarP(&alias, "alias", "a", "", "This will get the urls")
+	_ = Cmd.MarkFlagRequired("alias")
 }
